@@ -20,6 +20,8 @@ function send(ws, type, data = {}) {
 const clients = new Map()
 var waitingQueue = []
 
+app.get('/online', (req, res) => res.send(clients.size))
+
 function pair(aId, bId) {
     const a = clients.get(aId);
     const b = clients.get(bId);
@@ -27,8 +29,8 @@ function pair(aId, bId) {
 
     a.partnerId = bId;
     b.partnerId = aId;
-    send(a.ws, "matched", {"partnerName": b.name})
-    send(b.ws, "matched", {"partnerName": a.name})
+    send(a.ws, "matched", { "partnerName": b.name })
+    send(b.ws, "matched", { "partnerName": a.name })
 }
 
 function skip(clientId) {

@@ -91,6 +91,29 @@ body {
   cursor: pointer;
 }
 
+
+#onlineIndicator {
+  font-size: 0.9em;
+  color: #00ff66;
+  margin-left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#onlineIndicator .dot {
+  height: 10px;
+  width: 10px;
+  background-color: #00ff66;
+  border-radius: 50%;
+  box-shadow: 0 0 5px #00ff66, 0 0 10px #00ff66;
+}
+
+#onlineCount {
+  font-weight: bold;
+}
+
+
 /* Layout */
 .app {
   max-width: 900px;
