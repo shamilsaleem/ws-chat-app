@@ -74,71 +74,67 @@ function connect() {
 
     ws.addEventListener("open", function () {
         console.log("WebSocket connected.")
-        ws.send(JSON.stringify({ "type": "Connection message" }))
-
+        if (nameQueued) {
+            ws.send(JSON.stringify({ type: "set_name", name: nameQueued }));
+            nameQueued = null
+        }
     })
 
     ws.addEventListener("message", function (ev) {
         let msg;
         try { msg = JSON.parse(ev.data); } catch { return; }
-
         switch (msg.type) {
             case "waiting":
                 setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
                 setUIWaiting();
                 break;
             case "matched":
-                setUIPaired(msg.partnerName || "Stranger");
-                systemLine(`You're now chatting with ${msg.partnerName || "a stranger"}.`);
+                setUIPaired(msg.data.partnerName || "Stranger");
+                systemLine(`You're now chatting with ${msg.data.partnerName || "a stranger"}.`);
                 console.log("matched")
                 break;
             case "chat":
-                addMsg(msg.from || "Stranger", msg.data.text || "", false);
+                addMsg(msg.data.from || "Stranger", msg.data.text || "", false);
                 break;
         }
     })
-
-
-    nameForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const v = nameInput.value.trim();
-        if (!v) return;
-        myName = v;
-        nameQueued = myName;
-        nameModal.classList.remove("show");
-
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-            connect();
-        } else {
-            ws.send(JSON.stringify({ type: "set_name", name: myName }));
-            nameQueued = null;
-        }
-    });
-
-    // Send message
-    inputBar.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const txt = msgInput.value.trim();
-        if (!txt || !ws || ws.readyState !== ws.OPEN) return;
-        ws.send(JSON.stringify({ type: "chat", text: txt }));
-        addMsg(myName || "Me", txt, true);
-        msgInput.value = "";
-    });
-
-    // Skip partner
-    skipBtn.addEventListener("click", () => {
-        if (!ws || ws.readyState !== ws.OPEN) return;
-        ws.send(JSON.stringify({ type: "skip" }));
-        setUIWaiting();
-    });
-
-
 
     ws.addEventListener("close", function () {
         console.log("closed")
     })
 }
 
+nameForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = nameInput.value.trim();
+    if (!v) return;
+    myName = v;
+    nameQueued = myName;
+    nameModal.classList.remove("show");
+
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connect();
+    } else {
+        ws.send(JSON.stringify({ type: "set_name", name: myName }));
+        nameQueued = null;
+    }
+});
+
+// Send message
+inputBar.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const txt = msgInput.value.trim();
+    if (!txt || !ws || ws.readyState !== ws.OPEN) return;
+    ws.send(JSON.stringify({ type: "chat", text: txt }));
+    addMsg(myName || "Me", txt, true);
+    msgInput.value = "";
+});
+
+// Skip partner
+skipBtn.addEventListener("click", () => {
+    if (!ws || ws.readyState !== ws.OPEN) return;
+    ws.send(JSON.stringify({ type: "skip" }));
+    setUIWaiting();
+});
 
 setUIDisabled()
-connect()

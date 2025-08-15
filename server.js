@@ -27,8 +27,8 @@ function pair(aId, bId) {
 
     a.partnerId = bId;
     b.partnerId = aId;
-    send(a.ws, "matched")
-    send(b.ws, "matched")
+    send(a.ws, "matched", {"partnerName": b.name})
+    send(b.ws, "matched", {"partnerName": a.name})
 }
 
 function skip(clientId) {
@@ -38,7 +38,7 @@ function skip(clientId) {
     a.partnerId = null;
     b.partnerId = null;
     send(b.ws, "waiting")
-    setTimeout(()=>send(a.ws, "waiting"), 500)
+    send(a.ws, "waiting")
 }
 
 function doMatch(clientId) {
@@ -63,7 +63,6 @@ function doMatch(clientId) {
 wss.on("connection", function (ws) {
     const clientId = Date.now() + Math.random();
     clients.set(clientId, { ws, name: null, partnerId: null, alive: true })
-    doMatch(clientId)
 
     ws.on("message", (raw) => {
         let msg;
@@ -79,10 +78,14 @@ wss.on("connection", function (ws) {
                 doMatch(clientId)
                 break;
             case "chat":
-                send(clients.get(clients.get(clientId).partnerId).ws, "chat", { "text": msg.text })
+                send(clients.get(clients.get(clientId).partnerId).ws, "chat", { "text": msg.text, "from": clients.get(clientId).name })
                 break;
             case "skip":
                 skip(clientId)
+                break;
+            case "set_name":
+                clients.get(clientId).name = msg.name
+                doMatch(clientId)
                 break;
 
         }

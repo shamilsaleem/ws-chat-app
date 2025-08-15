@@ -9,17 +9,6 @@
 </head>
 
 <body>
-  <!-- Name modal -->
-  <div id="nameModal" class="modal show">
-    <div class="modal-card">
-      <h1>Welcome 👋</h1>
-      <p>Enter a display name to start chatting with a random person.</p>
-      <form id="nameForm">
-        <input id="nameInput" type="text" maxlength="30" placeholder="Your name" required />
-        <button type="submit">Start</button>
-      </form>
-    </div>
-  </div>
 
   <!-- App -->
   <div class="app">
@@ -37,6 +26,16 @@
         <div class="spinner"></div>
         <div>Looking for someone to chat with…</div>
         <small>Leave this tab open. You'll connect automatically.</small>
+      </div>
+      <div id="nameModal" class="modal show">
+        <div class="modal-card">
+          <h1>Welcome 👋</h1>
+          <p>Enter a display name to start chatting with a random person.</p>
+          <form id="nameForm">
+            <input id="nameInput" type="text" maxlength="30" placeholder="Your name" required />
+            <button type="submit">Start</button>
+          </form>
+        </div>
       </div>
       <!-- Messages will be appended here -->
     </main>
