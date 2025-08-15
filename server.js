@@ -2,6 +2,7 @@ const path = require("path");
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
+const { text } = require("stream/consumers");
 
 const app = express();
 const server = http.createServer(app);
@@ -31,13 +32,13 @@ function pair(aId, bId) {
 }
 
 function doMatch(clientId) {
-    if(clients.get(clientId).partnerId !== null){
+    if (clients.get(clientId).partnerId !== null) {
         return
     }
     if (waitingQueue.length === 0) {
         waitingQueue.push(clientId)
         send(clients.get(clientId).ws, "waiting", {})
-        
+
     }
     else {
         if (waitingQueue[0] !== clientId) {
@@ -66,13 +67,15 @@ wss.on("connection", function (ws) {
         switch (msg.type) {
             case "doMatch":
                 doMatch(clientId)
-                break
+                break;
+            case "chat":
+                send(clients.get(clients.get(clientId).partnerId).ws, "chat", { "text": msg.text })
         }
     })
 
 
     ws.on("close", function () {
-        if(clients.get(clientId).partnerId){
+        if (clients.get(clientId).partnerId) {
             clients.get(clients.get(clientId).partnerId).partnerId = null
             send(clients.get(clients.get(clientId).partnerId).ws, "waiting", {})
         }

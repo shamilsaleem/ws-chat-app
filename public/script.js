@@ -40,6 +40,7 @@ function setUIPaired(partnerName) {
     skipBtn.disabled = false;
     connecting.classList.remove("show");
     nameModal.classList.remove("blur")
+    nameModal.classList.remove("show")
 }
 
 function addMsg(sender, text, isMe) {
@@ -90,6 +91,9 @@ function connect() {
                 setUIPaired(msg.partnerName || "Stranger");
                 systemLine(`You're now chatting with ${msg.partnerName || "a stranger"}.`);
                 console.log("matched")
+                break;
+            case "chat":
+                addMsg(msg.from || "Stranger", msg.data.text || "", false);
                 break;
         }
     })
