@@ -27,8 +27,18 @@ function pair(aId, bId) {
 
     a.partnerId = bId;
     b.partnerId = aId;
-    send(clients.get(aId).ws, "matched")
-    send(clients.get(bId).ws, "matched")
+    send(a.ws, "matched")
+    send(b.ws, "matched")
+}
+
+function skip(clientId) {
+    const a = clients.get(clientId);
+    const b = clients.get(clients.get(clientId).partnerId);
+
+    a.partnerId = null;
+    b.partnerId = null;
+    send(b.ws, "waiting")
+    setTimeout(()=>send(a.ws, "waiting"), 500)
 }
 
 function doMatch(clientId) {
@@ -70,6 +80,11 @@ wss.on("connection", function (ws) {
                 break;
             case "chat":
                 send(clients.get(clients.get(clientId).partnerId).ws, "chat", { "text": msg.text })
+                break;
+            case "skip":
+                skip(clientId)
+                break;
+
         }
     })
 

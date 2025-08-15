@@ -129,7 +129,6 @@ function connect() {
     skipBtn.addEventListener("click", () => {
         if (!ws || ws.readyState !== ws.OPEN) return;
         ws.send(JSON.stringify({ type: "skip" }));
-        isPaired = false;
         setUIWaiting();
     });
 
