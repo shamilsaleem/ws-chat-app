@@ -1,6 +1,5 @@
 let ws;
 let myName = null;
-let isPaired = false;
 let nameQueued = null;
 
 const statusEl = document.getElementById("status");
@@ -14,6 +13,11 @@ const nameModal = document.getElementById("nameModal");
 const nameForm = document.getElementById("nameForm");
 const nameInput = document.getElementById("nameInput");
 const inputBar = document.getElementById("inputBar");
+
+const userName = localStorage.getItem("name");
+if (userName) {
+    nameInput.value = userName;
+}
 
 
 function setUIDisabled() {
@@ -110,6 +114,7 @@ nameForm.addEventListener("submit", (e) => {
     if (!v) return;
     myName = v;
     nameQueued = myName;
+    localStorage.setItem("name", myName)
     nameModal.classList.remove("show");
 
     if (!ws || ws.readyState !== WebSocket.OPEN) {

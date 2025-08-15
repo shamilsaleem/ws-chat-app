@@ -64,7 +64,7 @@ function doMatch(clientId) {
 
 wss.on("connection", function (ws) {
     const clientId = Date.now() + Math.random();
-    clients.set(clientId, { ws, name: null, partnerId: null, alive: true })
+    clients.set(clientId, { ws, name: null, partnerId: null})
 
     ws.on("message", (raw) => {
         let msg;

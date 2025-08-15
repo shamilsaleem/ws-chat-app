@@ -91,7 +91,7 @@ body {
   cursor: pointer;
 }
 
-
+/* Online count */
 #onlineIndicator {
   font-size: 0.9em;
   color: #00ff66;
