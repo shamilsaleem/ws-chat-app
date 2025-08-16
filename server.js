@@ -55,7 +55,6 @@ function doMatch(clientId) {
         return
     } else {
         if (clients.get(clientId).partnerId === null && waitingQueue[0] !== clientId) {
-            console.log(waitingQueue)
             pair(waitingQueue[0], clientId)
             waitingQueue.shift()
             return
