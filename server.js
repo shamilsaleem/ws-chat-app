@@ -34,38 +34,40 @@ function pair(aId, bId) {
 }
 
 function skip(clientId) {
+    var partnerId = clients.get(clientId).partnerId
+    const b = clients.get(partnerId);
     const a = clients.get(clientId);
-    const b = clients.get(clients.get(clientId).partnerId);
 
-    send(b.ws, "partner_left", {"partnerName": a.name})
-    send(a.ws, "left_your_partner", {"partnerName": b.name})
-
-    a.partnerId = null;
     b.partnerId = null;
+    a.partnerId = null;
+
+    send(b.ws, "partner_left", { "partnerName": a.name })
+    send(a.ws, "left_your_partner", { "partnerName": b.name })
 }
 
 function doMatch(clientId) {
     if (clients.get(clientId).partnerId !== null) {
         return
     }
-    if (waitingQueue.length === 0) {
+    else if (waitingQueue.length === 0) {
         waitingQueue.push(clientId)
         send(clients.get(clientId).ws, "waiting", {})
-
-    }
-    else {
-        if (waitingQueue[0] !== clientId) {
+        return
+    } else {
+        if (clients.get(clientId).partnerId === null && waitingQueue[0] !== clientId) {
+            console.log(waitingQueue)
             pair(waitingQueue[0], clientId)
             waitingQueue.shift()
+            return
         } else {
-            send(clients.get(clientId).ws, "waiting", {})
+            return
         }
     }
 }
 
 wss.on("connection", function (ws) {
     const clientId = Date.now() + Math.random();
-    clients.set(clientId, { ws, name: null, partnerId: null})
+    clients.set(clientId, { ws, name: null, partnerId: null })
 
     ws.on("message", (raw) => {
         let msg;
@@ -98,7 +100,7 @@ wss.on("connection", function (ws) {
     ws.on("close", function () {
         if (clients.get(clientId).partnerId) {
             clients.get(clients.get(clientId).partnerId).partnerId = null
-            send(clients.get(clients.get(clientId).partnerId).ws, "partner_left", {"partnerName": clients.get(clientId).name})
+            send(clients.get(clients.get(clientId).partnerId).ws, "partner_left", { "partnerName": clients.get(clientId).name })
         }
         clients.delete(clientId)
     })

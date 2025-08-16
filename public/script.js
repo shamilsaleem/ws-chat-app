@@ -103,7 +103,7 @@ function connect() {
             case "partner_left":
                 systemLine(`${msg.data.partnerName || "Stranger"} left the chat.`);
                 setUIWaiting();
-                setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
+                ws.send(JSON.stringify({ "type": "doMatch" }))
                 break;
             case "left_your_partner":
                 systemLine(`You skipped ${msg.data.partnerName || "Stranger"}.`);
