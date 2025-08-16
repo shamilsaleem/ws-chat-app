@@ -1,5 +1,5 @@
 <div align="center">
-    <h1>wss-chat-app</h1>
+    <h1>ws-chat-app</h1>
     <img src="./public/favicon.svg" width="100px">
     <p>Simple text chat app like Omegle using <a
             href="https://nodejs.org/en/learn/getting-started/websocket">WebSockets</a>.</p>
