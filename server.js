@@ -2,7 +2,6 @@ const path = require("path");
 const express = require("express");
 const http = require("http");
 const WebSocket = require("ws");
-const { text } = require("stream/consumers");
 
 const app = express();
 const server = http.createServer(app);
@@ -20,7 +19,10 @@ function send(ws, type, data = {}) {
 const clients = new Map()
 var waitingQueue = []
 
+
 app.get('/online', (req, res) => res.send(clients.size))
+
+
 
 function pair(aId, bId) {
     const a = clients.get(aId);

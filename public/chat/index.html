@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Random Chat</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+
+  <!-- App -->
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <strong>Random Chat</strong>
+        <span id="onlineIndicator">
+          <span class="dot"></span>
+          <span id="onlineCount">0</span> online
+        </span>
+      </div>
+      <div class="status" id="status">Connecting…</div>
+      <button id="skipBtn" class="skip" disabled title="Find someone else">Skip ↻</button>
+    </header>
+
+    <main id="chatArea" class="chat">
+      <div id="connecting" class="connecting show">
+        <div class="spinner"></div>
+        <div>Looking for someone to chat with…</div>
+        <small>Leave this tab open. You'll connect automatically.</small>
+      </div>
+      <!-- Messages will be appended here -->
+    </main>
+
+    <div id="inputBar" class="show">
+      <form class="inputbar" autocomplete="off">
+        <input id="msgInput" type="text" placeholder="Type a message…" maxlength="2000" disabled />
+        <button id="sendBtn" type="submit" disabled>Send</button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <small>Built with WebSocket • Be kind ✨</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+
+</html>
