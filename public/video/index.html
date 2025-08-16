@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Random Video Chat</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <!-- Name Modal -->
+
+  <div class="app">
+    <!-- Top Bar (sticky) -->
+    <header class="topbar" id="topBar">
+      <div class="brand">
+        <span class="dot"></span>
+        <strong>Random Video Chat</strong>
+        <span id="onlineIndicator">
+          <span class="dot"></span>
+          <span id="onlineCount">0</span> online
+        </span>
+      </div>
+      <div class="status" id="status">Ready</div>
+      <button id="skipBtn" class="skip" disabled title="Find someone else">Skip ↻</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-wrap">
+      <!-- Video Area -->
+      <section class="video-wrap">
+        <div class="video-tile">
+          <video id="remoteVideo" autoplay playsinline></video>
+          <div class="label">Partner</div>
+        </div>
+        <div class="video-tile self">
+          <video id="localVideo" autoplay muted playsinline></video>
+          <div class="label">You</div>
+          <div class="controls">
+            <button id="toggleMic" class="pill">Mic</button>
+            <button id="toggleCam" class="pill">Cam</button>
+            <button id="shareScreen" class="pill">Share</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Text Chat -->
+      <section class="side-chat">
+        <div id="chatArea" class="chat">
+          <div id="connecting" class="connecting">
+            <div class="spinner"></div>
+            <div>Looking for someone to chat with…</div>
+            <small>Leave this tab open. You’ll connect automatically.</small>
+          </div>
+        </div>
+        <form id="inputBar" class="inputbar" autocomplete="off">
+          <input id="msgInput" type="text" placeholder="Type a message…" maxlength="2000" disabled />
+          <button id="sendBtn" type="submit" disabled>Send</button>
+        </form>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <small>Built with WebRTC + WebSocket • Be kind ✨</small>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
