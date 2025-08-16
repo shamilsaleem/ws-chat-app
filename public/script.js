@@ -34,7 +34,7 @@ function setUIWaiting() {
     sendBtn.disabled = true;
     skipBtn.disabled = true;
     connecting.classList.add("show");
-    nameModal.classList.add("blur")
+    nameModal.classList.add("blur");
 }
 
 function setUIPaired(partnerName) {
@@ -100,6 +100,16 @@ function connect() {
             case "chat":
                 addMsg(msg.data.from || "Stranger", msg.data.text || "", false);
                 break;
+            case "partner_left":
+                systemLine(`${msg.data.partnerName || "Stranger"} left the chat.`);
+                setUIWaiting();
+                setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
+                break;
+            case "left_your_partner":
+                systemLine(`You skipped ${msg.data.partnerName || "Stranger"}.`);
+                setUIWaiting();
+                setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
+                break;
         }
     })
 
@@ -133,6 +143,7 @@ inputBar.addEventListener("submit", (e) => {
     ws.send(JSON.stringify({ type: "chat", text: txt }));
     addMsg(myName || "Me", txt, true);
     msgInput.value = "";
+    msgInput.focus();
 });
 
 // Skip partner

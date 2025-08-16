@@ -37,10 +37,11 @@ function skip(clientId) {
     const a = clients.get(clientId);
     const b = clients.get(clients.get(clientId).partnerId);
 
+    send(b.ws, "partner_left", {"partnerName": a.name})
+    send(a.ws, "left_your_partner", {"partnerName": b.name})
+
     a.partnerId = null;
     b.partnerId = null;
-    send(b.ws, "waiting")
-    send(a.ws, "waiting")
 }
 
 function doMatch(clientId) {
@@ -97,7 +98,7 @@ wss.on("connection", function (ws) {
     ws.on("close", function () {
         if (clients.get(clientId).partnerId) {
             clients.get(clients.get(clientId).partnerId).partnerId = null
-            send(clients.get(clients.get(clientId).partnerId).ws, "waiting", {})
+            send(clients.get(clients.get(clientId).partnerId).ws, "partner_left", {"partnerName": clients.get(clientId).name})
         }
         clients.delete(clientId)
     })
