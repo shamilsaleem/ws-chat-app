@@ -34,7 +34,7 @@ body {
 }
 .modal-card h1 { margin: 0 0 6px; font-size: 24px; }
 .modal-card p { margin: 0 0 16px; color: var(--muted); }
-.modal-card form { display: flex; gap: 10px; }
+.modal-card #nameForm { display: flex; gap: 10px; }
 .modal-card input {
   flex: 1; padding: 12px 14px; border-radius: 12px; border: 1px solid #2b3153; background: #0e1030; color: var(--text); outline: none;
 }

@@ -5,21 +5,29 @@ let localStream;
 let screenStream;
 let myName = null;
 let isPaired = false;
-let nameQueued = null;
 
-const statusEl   = document.getElementById("status");
-const skipBtn    = document.getElementById("skipBtn");
-const msgInput   = document.getElementById("msgInput");
-const sendBtn    = document.getElementById("sendBtn");
-const chatArea   = document.getElementById("chatArea");
+const statusEl = document.getElementById("status");
+const skipBtn = document.getElementById("skipBtn");
+const msgInput = document.getElementById("msgInput");
+const sendBtn = document.getElementById("sendBtn");
+const chatArea = document.getElementById("chatArea");
 const connecting = document.getElementById("connecting");
 
-const localVideo  = document.getElementById("localVideo");
+const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 
-const toggleMicBtn   = document.getElementById("toggleMic");
-const toggleCamBtn   = document.getElementById("toggleCam");
+const toggleMicBtn = document.getElementById("toggleMic");
+const toggleCamBtn = document.getElementById("toggleCam");
 const shareScreenBtn = document.getElementById("shareScreen");
+
+
+const userName = localStorage.getItem("name");
+if (!userName) {
+    window.location.href = "/";
+} else {
+    myName = userName
+}
+
 
 // ---- Helpers ----
 function escapeHtml(str) {
@@ -73,7 +81,7 @@ async function getMedia() {
   try {
     localStream = await navigator.mediaDevices.getUserMedia({
       audio: true,
-      video: { aspectRatio: 4/3, width: { ideal: 960 } }
+      video: { aspectRatio: 4 / 3, width: { ideal: 960 } }
     });
     localVideo.srcObject = localStream;
     return localStream;
@@ -188,68 +196,26 @@ function wsConnect() {
 
     switch (msg.type) {
       case "waiting":
-        isPaired = false;
+        setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
         setUIWaiting();
         break;
-
-      case "paired": {
-        isPaired = true;
-        setUIPaired(msg.partnerName || "Stranger");
-        systemLine(`You're now chatting with ${msg.partnerName || "a stranger"}.`);
-
-        // Prepare WebRTC
-        createPeerConnection();
-        await addLocalTracks();
-
-        // Decide who starts: simple heuristic — user with lexicographically smaller name acts as caller
-        // (You can change to a server "role": "caller"/"callee")
-        const startCaller = !!msg.startCaller; // if server provides, use it
-        if (typeof msg.startCaller === "undefined") {
-          // fallback deterministic: shorter name starts
-          const me = (myName || "").toLowerCase();
-          const them = (msg.partnerName || "").toLowerCase();
-          if (me && them) {
-            if (me.length <= them.length) await startCallIfPolite();
-          } else {
-            // default to starting
-            await startCallIfPolite();
-          }
-        } else if (startCaller) {
-          await startCallIfPolite();
-        }
+      case "matched":
+        setUIPaired(msg.data.partnerName || "Stranger");
+        systemLine(`You're now chatting with ${msg.data.partnerName || "a stranger"}.`);
+        console.log("matched")
         break;
-      }
-
-      case "partner_left":
-        isPaired = false;
-        systemLine("Your partner left. Finding someone new…");
-        setUIWaiting();
-        cleanupPeer();
-        break;
-
       case "chat":
-        addMsg(msg.from || "Stranger", msg.text || "", false);
+        addMsg(msg.data.from || "Stranger", msg.data.text || "", false);
         break;
-
-      case "sdp":
-        if (!pc) { createPeerConnection(); await addLocalTracks(); }
-        await handleRemoteSDP(msg.description);
+      case "partner_left":
+        systemLine(`${msg.data.partnerName || "Stranger"} left the chat.`);
+        setUIWaiting();
+        ws.send(JSON.stringify({ "type": "doMatch" }))
         break;
-
-      case "ice":
-        if (pc && msg.candidate) {
-          try { await pc.addIceCandidate(msg.candidate); } catch (e) { console.warn(e); }
-        }
-        break;
-
-      case "ping":
-        wsSend({ type: "ping" });
-        break;
-
-      case "online":
-        // optional live online count
-        const n = document.getElementById("onlineCount");
-        if (n) n.textContent = msg.count ?? n.textContent;
+      case "left_your_partner":
+        systemLine(`You skipped ${msg.data.partnerName || "Stranger"}.`);
+        setUIWaiting();
+        setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
         break;
     }
   });
@@ -275,8 +241,8 @@ function wsSend(obj) {
 // ---- Cleanup ----
 function cleanupPeer() {
   if (pc) {
-    try { pc.getSenders().forEach(s => s.track && s.track.stop()); } catch {}
-    try { pc.close(); } catch {}
+    try { pc.getSenders().forEach(s => s.track && s.track.stop()); } catch { }
+    try { pc.close(); } catch { }
   }
   pc = null;
 
@@ -284,13 +250,15 @@ function cleanupPeer() {
   remoteVideo.srcObject = null;
 }
 
+
 document.getElementById("inputBar").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const txt = msgInput.value.trim();
-  if (!txt || !ws || ws.readyState !== WebSocket.OPEN || !isPaired) return;
-  wsSend({ type: "chat", text: txt });
-  addMsg(myName || "Me", txt, true);
-  msgInput.value = "";
+    e.preventDefault();
+    const txt = msgInput.value.trim();
+    if (!txt || !ws || ws.readyState !== ws.OPEN) return;
+    wsSend({ type: "chat", text: txt });
+    addMsg(myName || "Me", txt, true);
+    msgInput.value = "";
+    msgInput.focus();
 });
 
 skipBtn.addEventListener("click", () => {
@@ -310,7 +278,7 @@ function updateOnlineCount() {
   fetch("/online").then(r => r.text()).then(n => {
     const el = document.getElementById("onlineCount");
     if (el) el.textContent = n;
-  }).catch(()=>{});
+  }).catch(() => { });
 }
 updateOnlineCount();
 setInterval(updateOnlineCount, 5000);

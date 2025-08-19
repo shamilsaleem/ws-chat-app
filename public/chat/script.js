@@ -1,6 +1,5 @@
 let ws;
 let myName = null;
-let nameQueued = null;
 
 const statusEl = document.getElementById("status");
 const skipBtn = document.getElementById("skipBtn");
@@ -14,7 +13,7 @@ const userName = localStorage.getItem("name");
 if (!userName) {
     window.location.href = "/";
 } else {
-    nameQueued = userName
+    myName = userName
 }
 
 
@@ -72,9 +71,8 @@ function connect() {
 
     ws.addEventListener("open", function () {
         console.log("WebSocket connected.")
-        if (nameQueued) {
-            ws.send(JSON.stringify({ type: "set_name", name: nameQueued }));
-            nameQueued = null
+        if (myName) {
+            ws.send(JSON.stringify({ type: "set_name", name: myName }));
         }
     })
 

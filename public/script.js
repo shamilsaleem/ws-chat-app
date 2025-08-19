@@ -3,13 +3,19 @@ if (userName) {
     nameInput.value = userName;
 }
 
-nameForm.addEventListener("submit", (e) => {
-    e.preventDefault();
+var videoChat = () => {
+    const myName = nameInput.value.trim();
+    if (!myName) return;
+    localStorage.setItem("name", myName)
+    window.location.href = "/video"
+}
+
+var textChat = () => {
     const myName = nameInput.value.trim();
     if (!myName) return;
     localStorage.setItem("name", myName)
     window.location.href = "/chat"
-});
+}
 
 function updateOnlineCount() {
     fetch("/online")
