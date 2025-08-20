@@ -115,7 +115,7 @@ wss.on("connection", function (ws) {
 
         switch (msg.type) {
             case "doMatch":
-                doMatch(clientId)
+                doMatch(clientId, isVideo)
                 break;
             case "chat":
                 if (isVideo) {
@@ -131,7 +131,7 @@ wss.on("connection", function (ws) {
                 if (msg.video) {
                     clientsVideo.set(clientId, { ws, name: msg.name, partnerId: null })
                     isVideo = true
-                    doMatch(clientId, true)
+                    doMatch(clientId, isVideo)
                 } else {
                     clientsText.set(clientId, { ws, name: msg.name, partnerId: null })
                     doMatch(clientId, false)
