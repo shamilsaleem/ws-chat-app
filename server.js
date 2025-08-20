@@ -16,29 +16,45 @@ function send(ws, type, data = {}) {
     }
 }
 
-const clients = new Map()
-var waitingQueue = []
+const clientsText = new Map()
+const clientsVideo = new Map()
+var waitingQueueText = []
+var waitingQueueVideo = []
 
 
-app.get('/online', (req, res) => res.send(clients.size))
+app.get('/online', (req, res) => res.send(clientsText.size + clientsVideo.size))
 
 
 
-function pair(aId, bId) {
-    const a = clients.get(aId);
-    const b = clients.get(bId);
+function pair(aId, bId, isVideo) {
+    var a, b
+    if (isVideo) {
+        a = clientsVideo.get(aId);
+        b = clientsVideo.get(bId);
+        if (!a || !b) return;
+    } else {
+        a = clientsText.get(aId);
+        b = clientsText.get(bId);
+
+    }
     if (!a || !b) return;
-
     a.partnerId = bId;
     b.partnerId = aId;
     send(a.ws, "matched", { "partnerName": b.name })
     send(b.ws, "matched", { "partnerName": a.name })
 }
 
-function skip(clientId) {
-    var partnerId = clients.get(clientId).partnerId
-    const b = clients.get(partnerId);
-    const a = clients.get(clientId);
+function skip(clientId, isVideo) {
+    var a, b, partnerId
+    if (isVideo) {
+        partnerId = clientsVideo.get(clientId).partnerId
+        b = clientsVideo.get(partnerId);
+        a = clientsVideo.get(clientId);
+    } else {
+        partnerId = clientsText.get(clientId).partnerId
+        b = clientsText.get(partnerId);
+        a = clientsText.get(clientId);
+    }
 
     b.partnerId = null;
     a.partnerId = null;
@@ -47,29 +63,47 @@ function skip(clientId) {
     send(a.ws, "left_your_partner", { "partnerName": b.name })
 }
 
-function doMatch(clientId) {
-    if (clients.get(clientId).partnerId !== null) {
-        return
-    }
-    else if (waitingQueue.length === 0) {
-        waitingQueue.push(clientId)
-        send(clients.get(clientId).ws, "waiting", {})
-        return
-    } else {
-        if (clients.get(clientId).partnerId === null && waitingQueue[0] !== clientId) {
-            pair(waitingQueue[0], clientId)
-            waitingQueue.shift()
+function doMatch(clientId, isVideo) {
+    if (isVideo) {
+        if (clientsVideo.get(clientId).partnerId !== null) {
+            return
+        }
+        else if (waitingQueueVideo.length === 0) {
+            waitingQueueVideo.push(clientId)
+            send(clientsVideo.get(clientId).ws, "waiting", {})
             return
         } else {
+            if (clientsVideo.get(clientId).partnerId === null && waitingQueueVideo[0] !== clientId) {
+                pair(waitingQueueVideo[0], clientId, true)
+                waitingQueueVideo.shift()
+                return
+            } else {
+                return
+            }
+        }
+    } else {
+        if (clientsText.get(clientId).partnerId !== null) {
             return
+        }
+        else if (waitingQueueText.length === 0) {
+            waitingQueueText.push(clientId)
+            send(clientsText.get(clientId).ws, "waiting", {})
+            return
+        } else {
+            if (clientsText.get(clientId).partnerId === null && waitingQueueText[0] !== clientId) {
+                pair(waitingQueueText[0], clientId, false)
+                waitingQueueText.shift()
+                return
+            } else {
+                return
+            }
         }
     }
 }
 
 wss.on("connection", function (ws) {
-    const clientId = Date.now() + Math.random();
-    clients.set(clientId, { ws, name: null, partnerId: null })
-
+    var clientId = Date.now() + Math.random()
+    var isVideo = false
     ws.on("message", (raw) => {
         let msg;
         try {
@@ -84,26 +118,44 @@ wss.on("connection", function (ws) {
                 doMatch(clientId)
                 break;
             case "chat":
-                send(clients.get(clients.get(clientId).partnerId).ws, "chat", { "text": msg.text, "from": clients.get(clientId).name })
+                if (isVideo) {
+                    send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "chat", { "text": msg.text, "from": clientsVideo.get(clientId).name })
+                } else {
+                    send(clientsText.get(clientsText.get(clientId).partnerId).ws, "chat", { "text": msg.text, "from": clientsText.get(clientId).name })
+                }
                 break;
             case "skip":
-                skip(clientId)
+                skip(clientId, isVideo)
                 break;
             case "set_name":
-                clients.get(clientId).name = msg.name
-                doMatch(clientId)
+                if (msg.video) {
+                    clientsVideo.set(clientId, { ws, name: msg.name, partnerId: null })
+                    isVideo = true
+                    doMatch(clientId, true)
+                } else {
+                    clientsText.set(clientId, { ws, name: msg.name, partnerId: null })
+                    doMatch(clientId, false)
+                }
                 break;
 
         }
     })
 
 
-    ws.on("close", function () {
-        if (clients.get(clientId).partnerId) {
-            clients.get(clients.get(clientId).partnerId).partnerId = null
-            send(clients.get(clients.get(clientId).partnerId).ws, "partner_left", { "partnerName": clients.get(clientId).name })
+    ws.on("close", function (mm) {
+        if (isVideo) {
+            if (clientsVideo.get(clientId).partnerId) {
+                clientsVideo.get(clientsVideo.get(clientId).partnerId).partnerId = null
+                send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "partner_left", { "partnerName": clientsVideo.get(clientId).name })
+            }
+            clientsVideo.delete(clientId)
+        } else {
+            if (clientsText.get(clientId).partnerId) {
+                clientsText.get(clientsText.get(clientId).partnerId).partnerId = null
+                send(clientsText.get(clientsText.get(clientId).partnerId).ws, "partner_left", { "partnerName": clientsText.get(clientId).name })
+            }
+            clientsText.delete(clientId)
         }
-        clients.delete(clientId)
     })
 })
 

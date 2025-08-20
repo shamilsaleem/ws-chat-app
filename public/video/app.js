@@ -23,9 +23,9 @@ const shareScreenBtn = document.getElementById("shareScreen");
 
 const userName = localStorage.getItem("name");
 if (!userName) {
-    window.location.href = "/";
+  window.location.href = "/";
 } else {
-    myName = userName
+  myName = userName
 }
 
 
@@ -187,7 +187,7 @@ function wsConnect() {
 
   ws.addEventListener("open", () => {
     statusEl.textContent = "Connected. Setting up…";
-    if (myName) wsSend({ type: "set_name", name: myName });
+    if (myName) wsSend({ type: "set_name", name: myName, video: true });
   });
 
   ws.addEventListener("message", async (ev) => {
@@ -252,13 +252,13 @@ function cleanupPeer() {
 
 
 document.getElementById("inputBar").addEventListener("submit", (e) => {
-    e.preventDefault();
-    const txt = msgInput.value.trim();
-    if (!txt || !ws || ws.readyState !== ws.OPEN) return;
-    wsSend({ type: "chat", text: txt });
-    addMsg(myName || "Me", txt, true);
-    msgInput.value = "";
-    msgInput.focus();
+  e.preventDefault();
+  const txt = msgInput.value.trim();
+  if (!txt || !ws || ws.readyState !== ws.OPEN) return;
+  wsSend({ type: "chat", text: txt });
+  addMsg(myName || "Me", txt, true);
+  msgInput.value = "";
+  msgInput.focus();
 });
 
 skipBtn.addEventListener("click", () => {
