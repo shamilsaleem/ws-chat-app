@@ -40,7 +40,7 @@ function pair(aId, bId, isVideo) {
     if (!a || !b) return;
     a.partnerId = bId;
     b.partnerId = aId;
-    send(a.ws, "matched", { "partnerName": b.name })
+    send(a.ws, "matched", { "partnerName": b.name, start: true })
     send(b.ws, "matched", { "partnerName": a.name })
 }
 
@@ -137,6 +137,10 @@ wss.on("connection", function (ws) {
                     doMatch(clientId, false)
                 }
                 break;
+            case "sdp":
+                send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "sdp", { "description": msg.description })
+            case "ice":
+                send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "ice", { "candidate": msg.candidate })
 
         }
     })

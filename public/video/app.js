@@ -135,8 +135,7 @@ async function startScreenShare() {
 function createPeerConnection() {
   pc = new RTCPeerConnection({
     iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:global.stun.twilio.com:3478?transport=udp" }
+      { urls: "stun:stun.l.google.com:19302" }
     ]
   });
 
@@ -176,15 +175,16 @@ async function handleRemoteSDP(desc) {
 }
 
 async function addLocalTracks() {
-  const stream = await getMedia();
-  stream.getTracks().forEach(t => pc.addTrack(t, stream));
+  if (!localStream) {
+    await getMedia();
+  }
+  localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 }
 
 // ---- Signaling WebSocket ----
 function wsConnect() {
   const proto = location.protocol === "https:" ? "wss" : "ws";
   ws = new WebSocket(`${proto}://${location.host}`);
-
   ws.addEventListener("open", () => {
     statusEl.textContent = "Connected. Setting up…";
     if (myName) wsSend({ type: "set_name", name: myName, video: true });
@@ -202,6 +202,9 @@ function wsConnect() {
       case "matched":
         setUIPaired(msg.data.partnerName || "Stranger");
         systemLine(`You're now chatting with ${msg.data.partnerName || "a stranger"}.`);
+        createPeerConnection();
+        await addLocalTracks();
+        if (msg.data.start) await startCallIfPolite()
         console.log("matched")
         break;
       case "chat":
@@ -210,12 +213,21 @@ function wsConnect() {
       case "partner_left":
         systemLine(`${msg.data.partnerName || "Stranger"} left the chat.`);
         setUIWaiting();
-        ws.send(JSON.stringify({ "type": "doMatch" }))
+        cleanupPeer()
+        setTimeout(()=> ws.send(JSON.stringify({ "type": "doMatch" })), 500)
         break;
       case "left_your_partner":
         systemLine(`You skipped ${msg.data.partnerName || "Stranger"}.`);
         setUIWaiting();
-        setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
+        cleanupPeer()
+        setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 700)
+        break;
+      case "sdp":
+        await handleRemoteSDP(msg.data.description);
+        break;
+      case "ice":
+        try { await pc.addIceCandidate(msg.data.candidate); } catch (e) { console.warn(e); }
+
         break;
     }
   });
@@ -224,6 +236,7 @@ function wsConnect() {
     isPaired = false;
     statusEl.textContent = "Disconnected. Reconnecting…";
     setUIDisabled();
+    cleanupPeer()
     setTimeout(wsConnect, 800);
   });
 
@@ -241,12 +254,9 @@ function wsSend(obj) {
 // ---- Cleanup ----
 function cleanupPeer() {
   if (pc) {
-    try { pc.getSenders().forEach(s => s.track && s.track.stop()); } catch { }
     try { pc.close(); } catch { }
   }
   pc = null;
-
-  // Keep local preview running for UI continuity; remove remote
   remoteVideo.srcObject = null;
 }
 
@@ -266,7 +276,6 @@ skipBtn.addEventListener("click", () => {
   wsSend({ type: "skip" });
   isPaired = false;
   setUIWaiting();
-  cleanupPeer();
 });
 
 toggleMicBtn.addEventListener("click", toggleMic);
@@ -285,5 +294,9 @@ setInterval(updateOnlineCount, 5000);
 
 // Initial UI
 setUIDisabled();
-wsConnect()
-getMedia()
+
+
+window.onload = async () => {
+  try { await getMedia(); } catch { }
+  wsConnect();
+}
