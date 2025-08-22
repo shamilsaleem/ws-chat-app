@@ -104,6 +104,7 @@ function doMatch(clientId, isVideo) {
 wss.on("connection", function (ws) {
     var clientId = Date.now() + Math.random()
     var isVideo = false
+    send(ws, "pong")
     ws.on("message", (raw) => {
         let msg;
         try {
@@ -114,6 +115,22 @@ wss.on("connection", function (ws) {
         }
 
         switch (msg.type) {
+            case "set_name":
+                if (msg.video) {
+                    clientsVideo.set(clientId, { ws, name: msg.name, partnerId: null })
+                    isVideo = true
+                    doMatch(clientId, isVideo)
+                } else {
+                    clientsText.set(clientId, { ws, name: msg.name, partnerId: null })
+                    doMatch(clientId, false)
+                }
+                break;
+            case "sdp":
+                send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "sdp", { "description": msg.description })
+                break;
+            case "ice":
+                send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "ice", { "candidate": msg.candidate })
+                break;
             case "doMatch":
                 doMatch(clientId, isVideo)
                 break;
@@ -127,34 +144,19 @@ wss.on("connection", function (ws) {
             case "skip":
                 skip(clientId, isVideo)
                 break;
-            case "set_name":
-                if (msg.video) {
-                    clientsVideo.set(clientId, { ws, name: msg.name, partnerId: null })
-                    isVideo = true
-                    doMatch(clientId, isVideo)
-                } else {
-                    clientsText.set(clientId, { ws, name: msg.name, partnerId: null })
-                    doMatch(clientId, false)
-                }
-                break;
-            case "sdp":
-                send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "sdp", { "description": msg.description })
-            case "ice":
-                send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "ice", { "candidate": msg.candidate })
-
         }
     })
 
 
-    ws.on("close", function (mm) {
+    ws.on("close", function () {
         if (isVideo) {
-            if (clientsVideo.get(clientId).partnerId) {
+            if (clientsVideo.get(clientId) !== undefined && clientsVideo.get(clientId).partnerId) {
                 clientsVideo.get(clientsVideo.get(clientId).partnerId).partnerId = null
                 send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "partner_left", { "partnerName": clientsVideo.get(clientId).name })
             }
             clientsVideo.delete(clientId)
         } else {
-            if (clientsText.get(clientId).partnerId) {
+            if (clientsText.get(clientId) !== undefined && clientsText.get(clientId).partnerId) {
                 clientsText.get(clientsText.get(clientId).partnerId).partnerId = null
                 send(clientsText.get(clientsText.get(clientId).partnerId).ws, "partner_left", { "partnerName": clientsText.get(clientId).name })
             }

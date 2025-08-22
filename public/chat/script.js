@@ -1,4 +1,4 @@
-let ws;
+let ws = null;
 let myName = null;
 
 const statusEl = document.getElementById("status");
@@ -69,17 +69,15 @@ function connect() {
     const proto = location.protocol === "https:" ? "wss" : "ws";
     ws = new WebSocket(`${proto}://${location.host}`);
 
-    ws.addEventListener("open", function () {
-        console.log("WebSocket connected.")
-        if (myName) {
-            ws.send(JSON.stringify({ type: "set_name", name: myName }));
-        }
-    })
+    ws.addEventListener("open", () => { })
 
     ws.addEventListener("message", function (ev) {
         let msg;
         try { msg = JSON.parse(ev.data); } catch { return; }
         switch (msg.type) {
+            case "pong":
+                if (myName) setTimeout(() => ws.send(JSON.stringify({ type: "set_name", name: myName })), 1000)
+                break;
             case "waiting":
                 setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
                 setUIWaiting();
@@ -87,7 +85,6 @@ function connect() {
             case "matched":
                 setUIPaired(msg.data.partnerName || "Stranger");
                 systemLine(`You're now chatting with ${msg.data.partnerName || "a stranger"}.`);
-                console.log("matched")
                 break;
             case "chat":
                 addMsg(msg.data.from || "Stranger", msg.data.text || "", false);
@@ -105,9 +102,7 @@ function connect() {
         }
     })
 
-    ws.addEventListener("close", function () {
-        console.log("closed")
-    })
+    ws.addEventListener("close", () => { })
 }
 
 // Send message
@@ -145,4 +140,8 @@ updateOnlineCount();
 setInterval(updateOnlineCount, 5000);
 
 setUIDisabled()
-connect()
+window.onload = async () => {
+    if (ws) ws.close();
+    connect()
+}
+window.onclose = () => ws.close()

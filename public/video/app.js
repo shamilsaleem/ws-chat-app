@@ -1,10 +1,9 @@
 // --- State ---
-let ws;
-let pc;
+let ws = null;
+let pc = null;
 let localStream;
 let screenStream;
 let myName = null;
-let isPaired = false;
 
 const statusEl = document.getElementById("status");
 const skipBtn = document.getElementById("skipBtn");
@@ -127,7 +126,7 @@ async function startScreenShare() {
       localVideo.srcObject = localStream;
     };
   } catch (e) {
-    console.log("Screen share cancelled", e);
+    window.alert("Share screen cancelled" + e)
   }
 }
 
@@ -155,6 +154,7 @@ function createPeerConnection() {
       systemLine("Connection failed. Trying to reconnect…");
     }
   };
+  return
 }
 
 async function startCallIfPolite() {
@@ -187,7 +187,6 @@ function wsConnect() {
   ws = new WebSocket(`${proto}://${location.host}`);
   ws.addEventListener("open", () => {
     statusEl.textContent = "Connected. Setting up…";
-    if (myName) wsSend({ type: "set_name", name: myName, video: true });
   });
 
   ws.addEventListener("message", async (ev) => {
@@ -195,6 +194,9 @@ function wsConnect() {
     try { msg = JSON.parse(ev.data); } catch { return; }
 
     switch (msg.type) {
+      case "pong":
+        if (myName) setTimeout(() => wsSend({ type: "set_name", name: myName, video: true }), 1000)
+        break;
       case "waiting":
         setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
         setUIWaiting();
@@ -202,10 +204,9 @@ function wsConnect() {
       case "matched":
         setUIPaired(msg.data.partnerName || "Stranger");
         systemLine(`You're now chatting with ${msg.data.partnerName || "a stranger"}.`);
-        createPeerConnection();
+        await createPeerConnection();
         await addLocalTracks();
         if (msg.data.start) await startCallIfPolite()
-        console.log("matched")
         break;
       case "chat":
         addMsg(msg.data.from || "Stranger", msg.data.text || "", false);
@@ -214,7 +215,7 @@ function wsConnect() {
         systemLine(`${msg.data.partnerName || "Stranger"} left the chat.`);
         setUIWaiting();
         cleanupPeer()
-        setTimeout(()=> ws.send(JSON.stringify({ "type": "doMatch" })), 500)
+        setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
         break;
       case "left_your_partner":
         systemLine(`You skipped ${msg.data.partnerName || "Stranger"}.`);
@@ -227,21 +228,17 @@ function wsConnect() {
         break;
       case "ice":
         try { await pc.addIceCandidate(msg.data.candidate); } catch (e) { console.warn(e); }
-
         break;
     }
   });
 
   ws.addEventListener("close", () => {
-    isPaired = false;
-    statusEl.textContent = "Disconnected. Reconnecting…";
-    setUIDisabled();
     cleanupPeer()
-    setTimeout(wsConnect, 800);
   });
 
   ws.addEventListener("error", () => {
     statusEl.textContent = "Connection error. Reconnecting…";
+    wsConnect()
   });
 }
 
@@ -274,7 +271,6 @@ document.getElementById("inputBar").addEventListener("submit", (e) => {
 skipBtn.addEventListener("click", () => {
   if (!ws || ws.readyState !== WebSocket.OPEN) return;
   wsSend({ type: "skip" });
-  isPaired = false;
   setUIWaiting();
 });
 
@@ -297,6 +293,8 @@ setUIDisabled();
 
 
 window.onload = async () => {
+  if (ws) ws.close();
   try { await getMedia(); } catch { }
   wsConnect();
 }
+window.onclose = () => ws.close()
