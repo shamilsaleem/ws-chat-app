@@ -294,7 +294,7 @@ setUIDisabled();
 
 window.onload = async () => {
   if (ws) ws.close();
-  try { await getMedia(); } catch { }
+  try { await getMedia(); } catch { window.alert("Allow camera and mic to continue."); return }
   wsConnect();
 }
 window.onclose = () => ws.close()

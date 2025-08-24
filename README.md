@@ -1,8 +1,9 @@
 <div align="center">
     <h1>ws-chat-app</h1>
     <img src="./public/favicon.svg" width="100px">
-    <p>Simple text chat app like Omegle using <a
-            href="https://nodejs.org/en/learn/getting-started/websocket">WebSockets</a>.</p>
+    <p>Simple text and video chat app like Omegle using <a
+            href="https://nodejs.org/en/learn/getting-started/websocket">WebSockets</a> and 
+            <a href="https://webrtc.org/">WebRTC</a>.</p>
 
 <p align="center">
   <a href="https://nodejs.org" target="_blank">
@@ -16,6 +17,11 @@
   </a>
   <a href="https://github.com" target="_blank">
     <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" />
+  </a>
+  <a href="https://webrtc.org/" target="_blank">
+    <img 
+    src="https://img.shields.io/badge/WebRTC-25D366?style=for-the-badge&logo=webrtc&logoColor=white" 
+    alt="WebRTC" />
   </a>
 </p>
 
