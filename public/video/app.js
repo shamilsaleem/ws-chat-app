@@ -34,6 +34,8 @@ function escapeHtml(str) {
 }
 
 function addMsg(sender, text, isMe) {
+  var typ = document.getElementById("typing")
+  if (typ !== null) chatArea.removeChild(typ)
   const div = document.createElement("div");
   div.className = "msg" + (isMe ? " me" : "");
   div.innerHTML = `<span class="sender">${escapeHtml(sender)}</span>${escapeHtml(text)}`;
@@ -181,6 +183,19 @@ async function addLocalTracks() {
   localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
 }
 
+function typing(isTyping) {
+  var div = document.getElementById("typing")
+  if (div === null && isTyping) {
+    var div = document.createElement("div");
+    div.className = "typing"
+    div.id = "typing"
+    div.innerHTML = "<i>typing...</i>"
+    chatArea.appendChild(div)
+  } else if (div !== null) {
+    chatArea.removeChild(div)
+  }
+}
+
 // ---- Signaling WebSocket ----
 function wsConnect() {
   const proto = location.protocol === "https:" ? "wss" : "ws";
@@ -229,6 +244,12 @@ function wsConnect() {
       case "ice":
         try { await pc.addIceCandidate(msg.data.candidate); } catch (e) { console.warn(e); }
         break;
+      case "typing_started":
+        typing(true)
+        break;
+      case "typing_end":
+        typing(false)
+        break;
     }
   });
 
@@ -273,6 +294,23 @@ skipBtn.addEventListener("click", () => {
   wsSend({ type: "skip" });
   setUIWaiting();
 });
+
+let isTyping = false;
+let typingTimer;
+const typingDelay = 1000;
+
+msgInput.addEventListener("input", () => {
+  if (!isTyping) {
+    isTyping = true
+    ws.send(JSON.stringify({ type: "typing_started" }))
+  }
+
+  clearTimeout(typingTimer)
+  typingTimer = setTimeout(() => {
+    isTyping = false
+    ws.send(JSON.stringify({ type: "typing_end" }))
+  }, typingDelay)
+})
 
 toggleMicBtn.addEventListener("click", toggleMic);
 toggleCamBtn.addEventListener("click", toggleCam);

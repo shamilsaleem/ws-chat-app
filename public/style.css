@@ -159,6 +159,12 @@ body {
 .msg .sender { display: block; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
 .system { text-align: center; color: var(--muted); font-size: 13px; margin: 12px 0; }
 
+
+.typing {
+  margin: 6px 0; padding: 10px 12px; line-height: 1.3;
+  word-wrap: break-word; white-space: pre-wrap;
+  color: #fefeffa7;
+}
 /* Input bar (sticky to bottom of side-chat) */
 .inputbar {
   position: sticky; bottom: 0; z-index: 1;

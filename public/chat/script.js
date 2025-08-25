@@ -41,11 +41,26 @@ function setUIPaired(partnerName) {
 }
 
 function addMsg(sender, text, isMe) {
+    var typ = document.getElementById("typing")
+    if (typ !== null) chatArea.removeChild(typ)
     const div = document.createElement("div");
     div.className = "msg" + (isMe ? " me" : "");
     div.innerHTML = `<span class="sender">${sender}</span>${escapeHtml(text)}`;
     chatArea.appendChild(div);
     chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function typing(isTyping) {
+    var div = document.getElementById("typing")
+    if (div === null && isTyping) {
+        var div = document.createElement("div");
+        div.className = "typing"
+        div.id = "typing"
+        div.innerHTML = "<i>typing...</i>"
+        chatArea.appendChild(div)
+    } else if (div !== null) {
+        chatArea.removeChild(div)
+    }
 }
 
 function systemLine(text) {
@@ -99,6 +114,12 @@ function connect() {
                 setUIWaiting();
                 setTimeout(() => ws.send(JSON.stringify({ "type": "doMatch" })), 500)
                 break;
+            case "typing_started":
+                typing(true)
+                break;
+            case "typing_end":
+                typing(false)
+                break;
         }
     })
 
@@ -122,6 +143,24 @@ skipBtn.addEventListener("click", () => {
     ws.send(JSON.stringify({ type: "skip" }));
     setUIWaiting();
 });
+
+let isTyping = false;
+let typingTimer;
+const typingDelay = 1000;
+
+msgInput.addEventListener("input", () => {
+    if (!isTyping) {
+        isTyping = true
+        ws.send(JSON.stringify({ type: "typing_started" }))
+    }
+
+    clearTimeout(typingTimer)
+    typingTimer = setTimeout(() => {
+        isTyping = false
+        ws.send(JSON.stringify({ type: "typing_end" }))
+    }, typingDelay)
+})
+
 
 
 function updateOnlineCount() {

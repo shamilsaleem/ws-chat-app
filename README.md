@@ -29,8 +29,10 @@
 
 ## Screenshots
 <div align="center">
+    <img src="./screenshots/screenshot.png" width="500px">
+    <p>Video Chat</p>
     <img src="./screenshots/screenshot1.png" width="500px">
-    <p>Desktop view</p>
+    <p>Text Chat/p>
 </div>
 
 ## Features

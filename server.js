@@ -10,7 +10,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const wss = new WebSocket.Server({ server })
 
-function send(ws, type, data = {}) {
+function send(ws, type, data) {
     if (ws.readyState === ws.OPEN) {
         ws.send(JSON.stringify({ type, data }));
     }
@@ -139,6 +139,20 @@ wss.on("connection", function (ws) {
                     send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "chat", { "text": msg.text, "from": clientsVideo.get(clientId).name })
                 } else {
                     send(clientsText.get(clientsText.get(clientId).partnerId).ws, "chat", { "text": msg.text, "from": clientsText.get(clientId).name })
+                }
+                break;
+            case "typing_started":
+                if (isVideo) {
+                    send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "typing_started")
+                } else {
+                    send(clientsText.get(clientsText.get(clientId).partnerId).ws, "typing_started")
+                }
+                break;
+            case "typing_end":
+                if (isVideo) {
+                    send(clientsVideo.get(clientsVideo.get(clientId).partnerId).ws, "typing_end")
+                } else {
+                    send(clientsText.get(clientsText.get(clientId).partnerId).ws, "typing_end")
                 }
                 break;
             case "skip":
