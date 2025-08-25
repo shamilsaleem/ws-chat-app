@@ -32,7 +32,7 @@
     <img src="./screenshots/screenshot.png" width="500px">
     <p>Video Chat</p>
     <img src="./screenshots/screenshot1.png" width="500px">
-    <p>Text Chat/p>
+    <p>Text Chat</p>
 </div>
 
 ## Features
